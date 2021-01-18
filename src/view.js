@@ -1,4 +1,4 @@
-import { HPaintDoc, HPath, HEllipse, HRect, HLine, HLineStyle } from "./dom";
+import { HPaintDoc, HLineStyle } from "./dom-model";
 // 基类
 // 做一些初始化的事情， 例如事件拦截， 组件状态信息的收集， 调用model层的逻辑封装
 export class HPaintView {
@@ -47,7 +47,7 @@ export class HPaintView {
 
       document.onkeydown = function (e) {
         // attention old version is keyCode. e.code is new version api. Need to carefully validation.
-        switch (e.code) {
+        switch (e.keyCode) {
           case 9:
           case 13:
           case 27:

@@ -1,4 +1,4 @@
-import { HLine, HRect, HEllipse } from "../dom";
+import { HLine, HRect, HEllipse } from "../dom-model";
 
 function normalizeRect(rect) {
   let x = rect.p1.x;

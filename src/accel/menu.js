@@ -8,7 +8,6 @@ function installControllers() {
     <input type="button" id="CircleCreator" value="Create Circle" style="visibility:hidden">
     `;
 
-  debugger;
   for (let gkey in hview.controllers) {
     let key = gkey;
     let elem = document.getElementById(key);
@@ -28,7 +27,6 @@ function installControllers() {
 window.onLineWidthChanged = onLineWidthChanged;
 
 function onLineWidthChanged() {
-  debugger;
   let elem = document.getElementById("LineWidth");
   elem.blur();
   let val = parseInt(elem.value);

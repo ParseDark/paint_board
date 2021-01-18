@@ -1,4 +1,4 @@
-import { HPath } from "../dom";
+import { HPath } from "../dom-model";
 
 class HFreePathCreator {
   constructor() {
@@ -34,6 +34,7 @@ class HFreePathCreator {
     this.started = false;
     invalidate(null);
   }
+
   buildShape() {
     let points = [{ x: this.fromPos.x, y: this.fromPos.y }];
     for (let i in this.points) {
@@ -52,6 +53,7 @@ class HFreePathCreator {
       invalidate(null);
     }
   }
+
   onmouseup(event) {
     if (this.started) {
       debugger;
@@ -59,6 +61,7 @@ class HFreePathCreator {
       this.reset();
     }
   }
+
   onkeydown(event) {
     if (event.keyCode == 27) {
       this.reset();

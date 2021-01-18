@@ -1,4 +1,4 @@
-import "./dom";
+import "./dom-model";
 import "./view";
 import "./creator/path";
 import "./creator/freepath";

@@ -1,4 +1,4 @@
-import { HPath } from "../dom";
+import { HPath } from "../dom-model";
 
 class HPathCreator {
   constructor(close) {
