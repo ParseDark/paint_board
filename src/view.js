@@ -57,8 +57,15 @@ export class HPaintView {
           view.onkeydown(e);
         }
       };
+
+      window.onhashchange = function (e) {
+        view.doc.reload();
+        view.invalidateReact(null);
+      };
       this.drawing = drawing;
       this.doc = new HPaintDoc();
+      this.doc.init();
+      this.invalidateReact(null);
     }
   }
   get currentKey() {
