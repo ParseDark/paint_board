@@ -1,19 +1,125 @@
-class HLineStyle {
-  constructor(width, color) {
-    this.width = width;
-    this.color = color;
+function hitLine(pt, pt1, pt2, width) {
+  // 判定点在x轴上是否属于p1, p2点之间， 如果在x轴方向都不在这个区间，必定没有点击到这个直线
+  if ((pt1.x - pt.x) * (pt.x - pt2.x) < 0) {
+    return false;
+  }
+
+  // 同上， 只是换成了y轴
+  if ((pt1.y - pt.y) * (pt.y - pt2.y) < 0) {
+    return false;
+  }
+
+  let dy = pt2.y - pt1.y;
+  let dx = pt2.x - pt1.x;
+  let d12 = Math.sqrt(dx ** 2 + dy ** 2);
+
+  if (d12 < 0.1) {
+    return false;
+  }
+
+  let d =
+    Math.abs(dy * pt.x - dx * pt.y + pt2.x * pt1.y - pt1.x * pt2.y) / d12 - 2;
+  return width >= d * 2;
+}
+
+function hitRect(pt, r) {
+  // 判定方式同hitLine
+  if ((r.x + r.width - pt.x) * (pt.x - r.x) < 0) {
+    return false;
+  }
+
+  if ((r.y + r.height - pt.y) * (pt.y - r.y) < 0) {
+    return false;
+  }
+
+  return true;
+}
+
+// 格式化rect数据
+function normalizeRect(rect) {
+  let x = rect.pt1.x;
+  let y = rect.pt1.y;
+
+  let width = rect.pt2.x - x;
+  let height = rect.pt2.y - y;
+
+  if (width < 0) {
+    x = rect.pt2.x;
+    width = -width;
+  }
+
+  if (height < 0) {
+    y = rect.pt2.y;
+    height = -height;
+  }
+
+  return { x, y, width, height };
+}
+
+function fill(ctx, fillColor) {
+  if (fillColor) {
+    ctx.fillStyle = fillColor;
+    ctx.fill();
   }
 }
+
+function deleteItem(array, item) {
+  let index = array.indexOf(item);
+  if (index !== -1) {
+    array.splice(index, 1);
+  }
+}
+
+class HShapeStyle {
+  constructor(lineWidth, lineColor, fillColor) {
+    this.lineWidth = lineWidth;
+    this.lineColor = lineColor;
+    this.fillColor = fillColor;
+  }
+
+  setProp(key, val) {
+    this[key] = val;
+  }
+
+  clone() {
+    return new HShapeStyle(this.lineWidth, this.lineColor, this.fillColor);
+  }
+}
+
 class HLine {
-  constructor(pt1, pt2, lineStyle) {
+  constructor(pt1, pt2, style) {
     this.pt1 = pt1;
     this.pt2 = pt2;
-    this.lineStyle = lineStyle;
+    this.style = style;
   }
+
+  bound() {
+    return normalizeRect(this);
+  }
+
+  hitTest(pt) {
+    if (hitLine(pt, this.pt1, this.pt2, this.style.lineWidth)) {
+      return { hitCode: 1, hitShape: this };
+    }
+
+    return { hitCode: 0, hitShape: null };
+  }
+
+  move(dx, dy) {
+    this.pt1.x += dx;
+    this.pt1.y += dy;
+    this.pt2.x += dx;
+    this.pt2.y += dy;
+  }
+
+  setProp(key, val) {
+    this.style.setProp(key, val);
+  }
+
   onPaint(ctx) {
-    let lineStyle = this.lineStyle;
-    ctx.lineWidth = lineStyle.width;
-    ctx.color = lineStyle.color;
+    let style = this.style;
+    ctx.lineWidth = style.width;
+    ctx.strokeStyle = style.lineColor;
     ctx.beginPath();
     ctx.moveTo(this.pt1.x, this.pt1.y);
     ctx.lineTo(this.pt2.x, this.pt2.y);
@@ -21,60 +127,168 @@ class HLine {
   }
 }
 class HRect {
-  constructor(r, lineStyle) {
+  constructor(r, style) {
     this.x = r.x;
     this.y = r.y;
     this.width = r.width;
     this.height = r.height;
-    this.lineStyle = lineStyle;
+    this.style = style;
+  }
+
+  bound() {
+    return { x: this.x, y: this.y, width: this.width, height: this.height };
+  }
+
+  hitTest(pt) {
+    if (hitRect(pt, this)) {
+      return { hitCode: 1, hitShape: this };
+    }
+    return { hitCode: 0, hitShape: null };
+  }
+
+  move(dx, dy) {
+    this.x += dx;
+    this.y += dy;
+  }
+
+  setProp(key, val) {
+    this.style[key] = val;
   }
 
   onPaint(ctx) {
-    let lineStyle = this.lineStyle;
-    ctx.lineWidth = lineStyle.width;
-    ctx.strokeStyle = lineStyle.color;
+    let style = this.style;
+    ctx.lineWidth = style.lineWidth;
+    ctx.strokeStyle = style.lineColor;
     ctx.beginPath();
     ctx.rect(this.x, this.y, this.width, this.height);
+    fill(ctx, style.fillColor);
     ctx.stroke();
   }
 }
 
 class HEllipse {
-  constructor(x, y, radiusX, radiusY, lineStyle) {
+  constructor(x, y, radiusX, radiusY, style) {
     this.x = x;
     this.y = y;
     this.radiusX = radiusX;
     this.radiusY = radiusY;
-    this.lineStyle = lineStyle;
+    this.style = style;
+  }
+
+  bound() {
+    return {
+      x: this.x - this.radiusX,
+      y: this.y - this.radiusY,
+      width: this.radiusX * 2,
+      height: this.radiusY * 2,
+    };
+  }
+
+  hitTest(pt) {
+    let dx = pt.x - this.x;
+    let dy = pt.y - this.y;
+    let a = this.radiusX;
+    let b = this.radiusY;
+    if ((dx * dx) / a / a + (dy * dy) / b / b <= 1) {
+      return { hitCode: 1, hitShape: this };
+    }
+
+    return { hitCode: 0, hitShape: null };
+  }
+
+  move(dx, dy) {
+    this.x += dx;
+    this.y += dy;
+  }
+
+  setProp(key, val) {
+    this.style[key] = val;
   }
 
   onPaint(ctx) {
-    let lineStyle = this.lineStyle;
-    ctx.lineWidth = lineStyle.width;
-    ctx.strokeStyle = lineStyle.color;
+    let style = this.style;
+    ctx.lineWidth = style.lineWidth;
+    ctx.strokeStyle = style.lineColor;
     ctx.beginPath();
     ctx.ellipse(this.x, this.y, this.radiusX, this.radiusY, 0, 0, 2 * Math.PI);
+    fill(ctx, style.fillColor);
     ctx.stroke();
   }
 }
 
 class HPath {
-  constructor(points, close, lineStyle) {
+  constructor(points, close, style) {
     this.points = points;
     this.close = close;
-    this.lineStyle = lineStyle;
+    this.style = style;
+  }
+
+  bound() {
+    let points = this.points;
+    let n = points.length;
+    if (n < 1) {
+      return void 0;
+    }
+
+    let x1 = points[0].x;
+    let y1 = points[0].y;
+    let x2 = x1;
+    let y2 = y1;
+    for (let i = 1; i < n; i++) {
+      let tx = points[i].x;
+      let ty = points[i].y;
+      if (tx < x1) {
+        x1 = tx;
+      } else if (tx > x2) {
+        x2 = tx;
+      }
+
+      if (ty < y1) {
+        y1 = ty;
+      } else if (ty > y2) {
+        y2 = ty;
+      }
+    }
+    return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
+  }
+
+  hitTest(pt) {
+    if (hitRect(pt, this.bound())) {
+      let points = this.points;
+      let n = points.length;
+      if (n > 1) {
+        let lineWidth = this.style.lineWidth;
+        for (let i = 1; i < n; i++) {
+          if (hitLine(pt, points[i - 1], points[i], lineWidth)) {
+            return { hitCode: 1, hitShape: this };
+          }
+        }
+      }
+    }
+    return { hitCode: 0, hitShape: null };
+  }
+  move(dx, dy) {
+    let points = this.points;
+    for (let i in points) {
+      points[i].x += dx;
+      points[i].y += dy;
+    }
+  }
+
+  setProp(key, val) {
+    this.style.setProp(key, val);
   }
 
   onPaint(ctx) {
-    let n = this.points.length;
+    let points = this.points;
+    let n = points.length;
     if (n < 1) {
       return;
     }
 
-    let points = this.points;
-    let lineStyle = this.lineStyle;
-    ctx.lineWidth = lineStyle.width;
-    ctx.strokeStyle = lineStyle.color;
+    let style = this.style;
+    ctx.lineWidth = style.lineWidth;
+    ctx.strokeStyle = style.lineColor;
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < n; i++) {
@@ -100,6 +314,23 @@ class HPaintDoc {
     }
   }
 
+  deleteShape(shape) {
+    deleteItem(this.shapes, shape);
+  }
+
+  hitTest(pt) {
+    let shapes = this.shapes;
+    let n = shapes.length;
+    for (let i = n - 1; i >= 0; i--) {
+      let ret = shapes[i].hitTest(pt);
+      if (ret.hitCode > 0) {
+        return ret;
+      }
+    }
+
+    return { hitCode: 0, hitShape: null };
+  }
+
   onPaint(ctx) {
     let shapes = this.shapes;
     for (let i in shapes) {
@@ -108,4 +339,4 @@ class HPaintDoc {
   }
 }
 
-export { HPaintDoc, HPath, HEllipse, HRect, HLine, HLineStyle };
+export { HPaintDoc, HPath, HEllipse, HRect, HLine, HShapeStyle, normalizeRect };

@@ -44,7 +44,7 @@ class HPathCreator {
       points.push(this.points[i]);
     }
 
-    return new HPath(points, this.close, hview.lineStyle);
+    return new HPath(points, this.close, hview.style.clone());
   }
 
   onmousedown(e) {
@@ -88,7 +88,7 @@ class HPathCreator {
 
   onPaint(ctx) {
     if (this.started) {
-      let props = hview.properties;
+      let props = hview.style;
       ctx.lineWidth = props.lineWidth;
       ctx.strokeStyle = props.lineColor;
       ctx.beginPath();

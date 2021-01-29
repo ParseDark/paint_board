@@ -1,35 +1,11 @@
-import { HLine, HRect, HEllipse } from "../dom-model";
-
-function normalizeRect(rect) {
-  let x = rect.p1.x;
-  let y = rect.p1.y;
-  let width = rect.p2.x - x;
-  let height = rect.p2.y - y;
-
-  if (width < 0) {
-    x = rect.p2.x;
-    width = -width;
-  }
-
-  if (height < 0) {
-    y = rect.p2.y;
-    height = -height;
-  }
-
-  return {
-    x,
-    y,
-    width,
-    height,
-  };
-}
+import { HLine, HRect, HEllipse, normalizeRect } from "../dom-model";
 
 class HRectCreator {
   constructor(shapeType) {
     this.shapeType = shapeType;
     this.rect = {
-      p1: { x: 0, y: 0 },
-      p2: { x: 0, y: 0 },
+      pt1: { x: 0, y: 0 },
+      pt2: { x: 0, y: 0 },
     };
 
     this.started = false;
@@ -60,23 +36,25 @@ class HRectCreator {
   reset() {
     this.started = false;
     invalidate(this.rect);
+    hview.fireControllerReset();
   }
 
   buildShape() {
     let rect = this.rect;
+    let style = hview.style.clone();
     let r = normalizeRect(rect);
     switch (this.shapeType) {
       case "line":
-        return new HLine(rect.p1, rect.p2, hview.lineStyle);
+        return new HLine(rect.pt1, rect.pt2, style);
       case "rect":
-        return new HRect(r, hview.lineStyle);
+        return new HRect(r, style);
       case "ellipse":
         let rx = r.width / 2;
         let ry = r.height / 2;
-        return new HEllipse(r.x + rx, r.y + ry, rx, ry, hview.lineStyle);
+        return new HEllipse(r.x + rx, r.y + ry, rx, ry, style);
       case "circle":
         let rc = Math.sqrt(r.width * r.width + r.height * r.height);
-        return new HEllipse(rect.p1.x, rect.p1.y, rc, rc, hview.lineStyle);
+        return new HEllipse(rect.pt1.x, rect.pt1.y, rc, rc, style);
       default:
         alert("unknow shapeType: " + this.shapeType);
         return null;
@@ -85,20 +63,20 @@ class HRectCreator {
 
   onmousedown(e) {
     console.log("start mouse down");
-    this.rect.p1 = hview.getMousePos(e);
+    this.rect.pt1 = hview.getMousePos(e);
     this.started = true;
   }
   onmousemove(e) {
     if (this.started) {
       console.log("mouse moving", this.rect);
-      this.rect.p2 = hview.getMousePos(e);
+      this.rect.pt2 = hview.getMousePos(e);
       invalidate(this.rect);
     }
   }
   onmouseup(e) {
     if (this.started) {
       console.log("mouse up", this.rect);
-      this.rect.p2 = hview.getMousePos(e);
+      this.rect.pt2 = hview.getMousePos(e);
       hview.doc.addShape(this.buildShape());
       this.reset();
     }

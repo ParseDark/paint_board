@@ -33,6 +33,7 @@ class HFreePathCreator {
     this.points = [];
     this.started = false;
     invalidate(null);
+    hview.fireControllerReset();
   }
 
   buildShape() {
@@ -40,7 +41,7 @@ class HFreePathCreator {
     for (let i in this.points) {
       points.push(this.points[i]);
     }
-    return new HPath(points, this.close, hview.lineStyle);
+    return new HPath(points, this.close, hview.style.clone());
   }
 
   onmousedown(event) {
@@ -70,7 +71,7 @@ class HFreePathCreator {
 
   onPaint(ctx) {
     if (this.started) {
-      let props = hview.properties;
+      let props = hview.style;
       ctx.lineWidth = props.lineWidth;
       ctx.strokeStyle = props.lineColor;
       ctx.beginPath();

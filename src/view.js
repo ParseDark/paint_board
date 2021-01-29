@@ -1,20 +1,20 @@
-import { HPaintDoc, HLineStyle } from "./dom-model";
+import { HPaintDoc, HShapeStyle } from "./dom-model";
 // 基类
 // 做一些初始化的事情， 例如事件拦截， 组件状态信息的收集， 调用model层的逻辑封装
 export class HPaintView {
   constructor() {
-    this.properties = {
-      lineWidth: 1,
-      lineColor: "black",
-    };
+    this.style = new HShapeStyle(1, "black", "white");
     this.controllers = {};
     this._currentKey = "";
     this._current = null;
+    this._selection = null;
     this.onmousedown = null;
     this.onmousemove = null;
     this.onmouseup = null;
     this.ondblclick = null;
     this.onkeydown = null;
+    this.onSelectionChanged = null;
+    this.onControllerReset = null;
 
     {
       // initial
@@ -65,9 +65,18 @@ export class HPaintView {
     return this._currentKey;
   }
 
-  get lineStyle() {
-    let props = this.properties;
-    return new HLineStyle(props.lineWidth, props.lineColor);
+  get selection() {
+    return this._selection;
+  }
+
+  set selection(shape) {
+    let old = this._selection;
+    if (old != shape) {
+      this._selection = shape;
+      if (this.onSelectionChanged != null) {
+        this.onSelectionChanged(old);
+      }
+    }
   }
 
   onPain(ctx) {
@@ -111,6 +120,13 @@ export class HPaintView {
     if (this._current !== null) {
       this._current.stop();
       this._setCurrent("", null);
+    }
+  }
+
+  fireControllerReset() {
+    debugger;
+    if (this.onControllerReset != null) {
+      this.onControllerReset();
     }
   }
 
