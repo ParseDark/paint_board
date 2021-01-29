@@ -144,6 +144,16 @@ function installPropSelectors() {
         <option value="yellow">yellow</option>
         <option value="gray">gray</option>
     </select>
+
+     <label for="fillColor">fillColor: </label>
+    <select id="fillColor" onchange="onPropChanged('fillColor')">
+        <option value="black">black</option>
+        <option value="red">red</option>
+        <option value="blue">blue</option>
+        <option value="green">green</option>
+        <option value="yellow">yellow</option>
+        <option value="gray">gray</option>
+    </select>
   `;
   document.getElementById("menu").insertAdjacentElement("afterend", tempDiv);
 }
